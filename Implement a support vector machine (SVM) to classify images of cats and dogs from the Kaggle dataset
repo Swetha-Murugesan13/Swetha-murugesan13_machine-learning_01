@@ -1,0 +1,51 @@
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from skimage import io
+import os
+
+# Function to load images and labels from the dataset
+def load_data(folder):
+    images = []
+    labels = []
+    for filename in os.listdir(folder):
+        if filename.startswith("cat"):
+            label = 0  # 0 represents cat
+        else:
+            label = 1  # 1 represents dog
+        img = io.imread(os.path.join(folder, filename), as_gray=True)
+        images.append(img.flatten())  # Flatten the image into a 1D array
+        labels.append(label)
+    return np.array(images), np.array(labels)
+
+# Load images and labels
+X, y = load_data("path/to/dataset")  # Replace "path/to/dataset" with the actual path
+
+# Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Feature scaling
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Reduce dimensionality using PCA
+pca = PCA(n_components=100)  # You can adjust the number of components as needed
+X_train_pca = pca.fit_transform(X_train_scaled)
+X_test_pca = pca.transform(X_test_scaled)
+
+# Initialize SVM classifier
+svm_classifier = SVC(kernel='linear', random_state=42)
+
+# Train the SVM classifier
+svm_classifier.fit(X_train_pca, y_train)
+
+# Make predictions on the test set
+y_pred = svm_classifier.predict(X_test_pca)
+
+# Calculate accuracy
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy:", accuracy)
